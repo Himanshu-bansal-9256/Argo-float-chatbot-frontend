@@ -325,49 +325,56 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
    const sendMessage = async () => {
-    const question = chatInput.value.trim();
-    if (!question || sendBtn.disabled) return;
-    if (!hasChatStarted) {
-        welcomeScreen.classList.add('hidden');
-        hasChatStarted = true;
-    }
-    appendMessage(question, 'user');
-    chatInput.value = '';
-    sendBtn.classList.remove('sailed-away');
-    sendBtn.classList.add('thinking');
-    sendBtn.disabled = true;
-    const botBubble = appendMessage('', 'bot', true);
+  const userMessage = chatInput.value.trim();
+  if (!userMessage || sendBtn.disabled) return;
 
-    try {
-        // ✅ Automatically detect environment (local or deployed)
-        const API_URL =
-            window.location.hostname === "localhost"
-                ? "http://localhost:5000/api/chat"
-                : "https://argo-float-chatbot-backend-production.up.railway.app/api/chat"; // <-- change this after Render deploy
+  if (!hasChatStarted) {
+    welcomeScreen.classList.add("hidden");
+    hasChatStarted = true;
+  }
 
-        const res = await fetch(API_URL, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ question })
-        });
+  appendMessage(userMessage, "user");
+  chatInput.value = "";
+  sendBtn.classList.remove("sailed-away");
+  sendBtn.classList.add("thinking");
+  sendBtn.disabled = true;
 
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        const data = await res.json();
-        updateLastBotMessage(data.answer || "Sorry, I couldn't get a response.", botBubble);
-    } catch (err) {
-        console.error('Send message error', err);
-        stopTyping();
-        botBubble.textContent = `Error: ${err.message || 'Connection error'}.`;
-        addCopyButton(botBubble);
-    } finally {
-        sendBtn.classList.remove('thinking');
-        sendBtn.classList.add('sailed-away');
-        setTimeout(() => {
-            sendBtn.classList.remove('sailed-away');
-            sendBtn.disabled = false;
-        }, 1200);
-    }
+  const botBubble = appendMessage("", "bot", true);
+
+  try {
+    // ✅ Auto-detect environment
+    const API_URL =
+      window.location.hostname === "localhost"
+        ? "http://localhost:5000/api/chat"
+        : "https://argo-float-chatbot-backend-production.up.railway.app/api/chat";
+
+    // ✅ FIXED: send "message", not "question"
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: userMessage }),
+    });
+
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+
+    // ✅ FIXED: your backend returns { reply: ... }
+    const data = await res.json();
+    updateLastBotMessage(data.reply || "Sorry, I couldn't get a response.", botBubble);
+  } catch (err) {
+    console.error("Send message error", err);
+    stopTyping();
+    botBubble.textContent = `Error: ${err.message || "Connection error"}.`;
+    addCopyButton(botBubble);
+  } finally {
+    sendBtn.classList.remove("thinking");
+    sendBtn.classList.add("sailed-away");
+    setTimeout(() => {
+      sendBtn.classList.remove("sailed-away");
+      sendBtn.disabled = false;
+    }, 1200);
+  }
 };
+
 
     
     menuToggle.addEventListener('click', (e) => { sideMenu.classList.toggle('open'); e.stopPropagation(); });
@@ -426,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html> 
+
 
 
 
