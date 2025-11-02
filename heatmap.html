@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ARGO Heat Map</title>
+  
+  <!-- Leaflet.js CSS for the map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    :root {
+      /* Light Theme (Default: White & Black) */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --border-light: #dee2e6;
+      --accent-primary: #000000;
+      --accent-secondary: #ffffff;
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .night-theme {
+      /* Dark Theme (Black & White) */
+      --bg-primary: #000000;
+      --bg-secondary: #111111;
+      --text-primary: #ffffff;
+      --text-secondary: #adb5bd;
+      --border-light: #2d3436;
+      --accent-primary: #ffffff;
+      --accent-secondary: #000000;
+      --shadow-soft: 0 2px 8px rgba(255, 255, 255, 0.05);
+      --shadow-medium: 0 4px 16px rgba(255, 255, 255, 0.08);
+    }
+    
+    /* When in night theme, make the map tiles look darker */
+    .night-theme .leaflet-tile-pane {
+        filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+    }
+
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background-color 0.25s ease, color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Header --- */
+    .header { 
+        display:flex; 
+        align-items:center; 
+        justify-content:space-between; 
+        padding:16px 20px; 
+        border-bottom:1px solid var(--border-light); 
+        background:var(--bg-primary); 
+        flex-shrink: 0;
+    }
+    .logo-section { display:flex; gap:12px; align-items:center; }
+    .logo { 
+        width:40px; 
+        height:40px; 
+        border-radius:8px; 
+        background:var(--accent-primary); 
+        color:var(--accent-secondary); 
+        display:flex; 
+        align-items:center; 
+        justify-content:center; 
+        font-weight:600; 
+    }
+    .brand-name { font-weight:600; font-size:1.1rem; color:var(--text-primary); }
+    .controls { display:flex; gap:10px; align-items:center; }
+    .icon-btn { 
+        background:var(--bg-secondary); 
+        border:1px solid var(--border-light); 
+        padding:8px; 
+        border-radius:8px; 
+        cursor:pointer; 
+        display:inline-flex; 
+        align-items:center; 
+        justify-content:center; 
+    }
+    .icon-btn svg { width:20px; height:20px; stroke:var(--text-primary); }
+    
+    /* --- Main Content --- */
+    main {
+        display: flex;
+        flex-grow: 1;
+        overflow: hidden;
+    }
+    
+    /* --- Control Panel --- */
+    .control-panel {
+        width: 320px;
+        flex-shrink: 0;
+        padding: 24px;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .control-panel h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .input-group label {
+        font-weight: 500;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    .input-group select {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+    .action-button {
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent-primary);
+        color: var(--accent-secondary);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    .action-button:hover {
+        opacity: 0.9;
+    }
+    
+    /* --- Map Container --- */
+    #map {
+        flex-grow: 1;
+        height: 100%;
+        background-color: var(--bg-secondary);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        main {
+            flex-direction: column;
+        }
+        .control-panel {
+            width: 100%;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid var(--border-light);
+            box-sizing: border-box;
+        }
+    }
+
+  </style>
+</head>
+<body id="page-body">
+
+<header class="header">
+    <div class="logo-section">
+        <div class="logo">AF</div>
+        <div class="brand-name">ARGO Heat Map</div>
+    </div>
+    <div class="controls">
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+         <a href="chatbot.html" class="icon-btn" title="Back to Chat">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </a>
+    </div>
+</header>
+
+<main>
+    <div class="control-panel">
+        <h2>Generate Heat Map</h2>
+        <div class="input-group">
+            <label for="data-select">Select Data Layer</label>
+            <select id="data-select">
+                <option value="temperature">Sea Surface Temperature</option>
+                <option value="salinity">Salinity</option>
+                <option value="chlorophyll">Chlorophyll</option>
+            </select>
+        </div>
+        <button id="generate-btn" class="action-button">Generate Heat Map</button>
+    </div>
+    <div id="map"></div>
+</main>
+
+<!-- Leaflet.js and Heatmap Plugin -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const body = document.getElementById('page-body');
+    const themeToggle = document.getElementById('theme-toggle');
+    const generateBtn = document.getElementById('generate-btn');
+    const dataSelect = document.getElementById('data-select');
+    
+    // --- Theme Control ---
+    const setAutoNight = () => {
+        const hour = new Date().getHours();
+        if (localStorage.getItem('theme') === 'dark' || (hour < 6 || hour > 19)) {
+            body.classList.add('night-theme');
+        }
+    };
+    setAutoNight();
+    
+    themeToggle.addEventListener('click', () => {
+        const isNight = body.classList.toggle('night-theme');
+        localStorage.setItem('theme', isNight ? 'dark' : 'light');
+    });
+
+    // --- MOCK DATA ---
+    // In a real application, you would fetch this data from an API.
+    // Data format: [latitude, longitude, intensity]
+    const generateMockData = (latCenter, lonCenter, count, intensityMin, intensityMax) => {
+        const data = [];
+        for (let i = 0; i < count; i++) {
+            const lat = latCenter + (Math.random() - 0.5) * 20;
+            const lon = lonCenter + (Math.random() - 0.5) * 40;
+            const intensity = Math.random() * (intensityMax - intensityMin) + intensityMin;
+            data.push([lat, lon, intensity]);
+        }
+        return data;
+    };
+
+    const mockData = {
+        temperature: [
+            ...generateMockData(0, -120, 200, 25, 30), // Pacific Warm Pool
+            ...generateMockData(40, -40, 150, 15, 22) // North Atlantic
+        ],
+        salinity: [
+            ...generateMockData(25, -50, 250, 36, 37), // Atlantic Salinity Maximum
+            ...generateMockData(5, 140, 100, 33, 34) // Low salinity near Indonesia
+        ],
+        chlorophyll: [
+            ...generateMockData(50, -140, 300, 0.5, 2.0), // North Pacific Bloom
+            ...generateMockData(-10, -90, 200, 0.8, 3.0) // Upwelling off Peru
+        ]
+    };
+    
+    // --- Map Initialization ---
+    const map = L.map('map').setView([20, 0], 2);
+    let heatLayer = null;
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    // --- Button Logic ---
+    const generateHeatMap = () => {
+        const selectedDataKey = dataSelect.value;
+        const data = mockData[selectedDataKey];
+
+        if (!data) {
+            alert('No data available for the selected layer.');
+            return;
+        }
+
+        // Remove the old heat layer if it exists
+        if (heatLayer) {
+            map.removeLayer(heatLayer);
+        }
+
+        // Create and add the new heat layer
+        heatLayer = L.heatLayer(data, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 10,
+            gradient: {0.4: 'blue', 0.65: 'lime', 1: 'red'}
+        }).addTo(map);
+    };
+    
+    generateBtn.addEventListener('click', generateHeatMap);
+    
+    // Generate a default map on page load
+    generateHeatMap();
+});
+</script>
+
+</body>
+</html>

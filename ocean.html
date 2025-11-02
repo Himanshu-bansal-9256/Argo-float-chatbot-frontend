@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ARGO Ocean Currents</title>
+  
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    :root {
+      --bg-primary: #ffffff; --bg-secondary: #f8f9fa; --text-primary: #212529;
+      --text-secondary: #6c757d; --border-light: #dee2e6; --accent-primary: #000000;
+      --accent-secondary: #ffffff; --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+    .night-theme {
+      --bg-primary: #000000; --bg-secondary: #111111; --text-primary: #ffffff;
+      --text-secondary: #adb5bd; --border-light: #2d3436; --accent-primary: #ffffff;
+      --accent-secondary: #000000; --shadow-medium: 0 4px 16px rgba(255, 255, 255, 0.08);
+    }
+    .night-theme .leaflet-tile-pane {
+        filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+    }
+    body, html {
+      height: 100%; margin: 0; font-family: 'Inter', sans-serif;
+      overflow: hidden; background-color: var(--bg-primary); color: var(--text-primary);
+      display: flex; flex-direction: column;
+    }
+    .header { 
+        display:flex; align-items:center; justify-content:space-between; padding:16px 20px; 
+        border-bottom:1px solid var(--border-light); background:var(--bg-primary); flex-shrink: 0;
+    }
+    .logo-section { display:flex; gap:12px; align-items:center; }
+    .logo { 
+        width:40px; height:40px; border-radius:8px; background:var(--accent-primary); 
+        color:var(--accent-secondary); display:flex; align-items:center; justify-content:center; font-weight:600; 
+    }
+    .brand-name { font-weight:600; font-size:1.1rem; color:var(--text-primary); }
+    .controls { display:flex; gap:10px; align-items:center; }
+    .icon-btn { 
+        background:var(--bg-secondary); border:1px solid var(--border-light); padding:8px; 
+        border-radius:8px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; 
+    }
+    .icon-btn svg { width:20px; height:20px; stroke:var(--text-primary); }
+    #map { flex-grow: 1; height: 100%; width: 100%; background-color: var(--bg-secondary); }
+    .leaflet-control-velocity, .leaflet-control-layers {
+        background-color: var(--bg-secondary);
+        padding: 5px;
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        color: var(--text-primary);
+    }
+  </style>
+</head>
+<body id="page-body">
+
+<header class="header">
+    <div class="logo-section">
+        <div class="logo">AF</div>
+        <div class="brand-name">ARGO Ocean Currents</div>
+    </div>
+    <div class="controls">
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+         <a href="chatbot.html" class="icon-btn" title="Back to Chat">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </a>
+    </div>
+</header>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-velocity@1.1.0/dist/leaflet-velocity.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const body = document.getElementById('page-body');
+    const themeToggle = document.getElementById('theme-toggle');
+
+    const setAutoNight = () => {
+        const hour = new Date().getHours();
+        if (localStorage.getItem('theme') === 'dark' || (hour < 6 || hour > 19)) {
+            body.classList.add('night-theme');
+        }
+    };
+    setAutoNight();
+    
+    themeToggle.addEventListener('click', () => {
+        const isNight = body.classList.toggle('night-theme');
+        localStorage.setItem('theme', isNight ? 'dark' : 'light');
+    });
+
+    const map = L.map('map').setView([20, -50], 3);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    // Fetch and display the ocean current data
+    fetch('https://onaci.github.io/leaflet-velocity/wind-global.json')
+        .then(response => response.json())
+        .then(data => {
+            const velocityLayer = L.velocityLayer({
+                displayValues: true,
+                displayOptions: {
+                    velocityType: "Ocean Current",
+                    position: "bottomleft",
+                    emptyString: "No current data",
+                    angleConvention: "bearing",
+                    speedUnit: "m/s"
+                },
+                data: data,
+                // Style the particles
+                particleMultiplier: 1 / 700, // Amount of particles
+                lineWidth: 2,               // Width of particle tails
+                frameRate: 15,              // Animation speed
+                colorScale: ["#003366", "#004080", "#0059b3", "#0073e6", "#3399ff", "#66b3ff", "#99ccff", "#cce6ff"]
+            });
+
+            // Add a control to show/hide the layer
+            L.control.layers(null, {"Ocean Currents": velocityLayer}).addTo(map);
+            
+            // Add layer to map by default
+            velocityLayer.addTo(map);
+        })
+        .catch(err => console.error("Failed to load ocean current data:", err));
+});
+</script>
+
+</body>
+</html>

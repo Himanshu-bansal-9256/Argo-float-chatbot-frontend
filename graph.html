@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ARGO Graphs</title>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+    :root {
+      /* Light Theme (Default: White & Black) */
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --text-primary: #212529;
+      --text-secondary: #6c757d;
+      --border-light: #dee2e6;
+      --accent-primary: #000000;
+      --accent-secondary: #ffffff;
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-medium: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .night-theme {
+      /* Dark Theme (Black & White) */
+      --bg-primary: #000000;
+      --bg-secondary: #111111;
+      --text-primary: #ffffff;
+      --text-secondary: #adb5bd;
+      --border-light: #2d3436;
+      --accent-primary: #ffffff;
+      --accent-secondary: #000000;
+      --shadow-soft: 0 2px 8px rgba(255, 255, 255, 0.05);
+      --shadow-medium: 0 4px 16px rgba(255, 255, 255, 0.08);
+    }
+
+    body, html {
+      height: 100%;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background-color 0.25s ease, color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* --- Header --- */
+    .header { 
+        display:flex; 
+        align-items:center; 
+        justify-content:space-between; 
+        padding:16px 20px; 
+        border-bottom:1px solid var(--border-light); 
+        background:var(--bg-primary); 
+        flex-shrink: 0;
+        z-index: 10;
+    }
+    .logo-section { display:flex; gap:12px; align-items:center; }
+    .logo { 
+        width:40px; 
+        height:40px; 
+        border-radius:8px; 
+        background:var(--accent-primary); 
+        color:var(--accent-secondary); 
+        display:flex; 
+        align-items:center; 
+        justify-content:center; 
+        font-weight:600; 
+    }
+    .brand-name { font-weight:600; font-size:1.1rem; color:var(--text-primary); }
+    .controls { display:flex; gap:10px; align-items:center; }
+    .icon-btn { 
+        background:var(--bg-secondary); 
+        border:1px solid var(--border-light); 
+        padding:8px; 
+        border-radius:8px; 
+        cursor:pointer; 
+        display:inline-flex; 
+        align-items:center; 
+        justify-content:center; 
+    }
+    .icon-btn svg { width:20px; height:20px; stroke:var(--text-primary); }
+    
+    /* --- Main Content --- */
+    main {
+        display: flex;
+        flex-grow: 1;
+        overflow: hidden;
+    }
+    
+    /* --- Control Panel --- */
+    .control-panel {
+        width: 320px;
+        flex-shrink: 0;
+        padding: 24px;
+        background: var(--bg-secondary);
+        border-right: 1px solid var(--border-light);
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .control-panel h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    .input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .input-group label {
+        font-weight: 500;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+    .input-group select {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid var(--border-light);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-size: 1rem;
+    }
+    .action-button {
+        padding: 12px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent-primary);
+        color: var(--accent-secondary);
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+    
+    /* --- Graph Container --- */
+    .graph-container {
+        flex-grow: 1;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        main {
+            flex-direction: column;
+        }
+        .control-panel {
+            width: 100%;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid var(--border-light);
+            box-sizing: border-box;
+        }
+        .graph-container {
+            padding: 10px;
+        }
+    }
+  </style>
+</head>
+<body id="page-body">
+
+<header class="header">
+    <div class="logo-section">
+        <div class="logo">AF</div>
+        <div class="brand-name">ARGO Graphs</div>
+    </div>
+    <div class="controls">
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+        </button>
+         <a href="chatbot.html" class="icon-btn" title="Back to Chat">
+             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </a>
+    </div>
+</header>
+
+<main>
+    <div class="control-panel">
+        <h2>Graph Options</h2>
+        <div class="input-group">
+            <label for="graph-select">Select Graph Type</label>
+            <select id="graph-select">
+                <option value="tempProfile">Temperature Profile (vs. Depth)</option>
+                <option value="salinityProfile">Salinity Profile (vs. Depth)</option>
+                <option value="nutrientDistribution">Nutrient Distribution by Ocean</option>
+            </select>
+        </div>
+        <button id="generate-btn" class="action-button">Generate Graph</button>
+    </div>
+    <div class="graph-container">
+        <canvas id="myChart"></canvas>
+    </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const body = document.getElementById('page-body');
+    const themeToggle = document.getElementById('theme-toggle');
+    const generateBtn = document.getElementById('generate-btn');
+    const graphSelect = document.getElementById('graph-select');
+    const ctx = document.getElementById('myChart').getContext('2d');
+    let myChart = null; // Variable to hold the chart instance
+
+    // --- MOCK DATA ---
+    const mockData = {
+        tempProfile: {
+            labels: [0, 100, 200, 500, 1000, 2000, 3000], // Depth in meters
+            data: [22, 21, 18, 10, 5, 3.5, 2] // Temperature in °C
+        },
+        salinityProfile: {
+            labels: [0, 100, 200, 500, 1000, 2000, 3000], // Depth in meters
+            data: [35, 35.2, 35.1, 34.8, 34.6, 34.7, 34.8] // Salinity in PSU
+        },
+        nutrientDistribution: {
+            labels: ['Pacific', 'Atlantic', 'Indian', 'Southern', 'Arctic'],
+            nitrate: [42, 30, 35, 38, 12], // µmol/kg
+            phosphate: [2.8, 2.1, 2.3, 2.5, 1.1] // µmol/kg
+        }
+    };
+
+    // --- THEME & CHART COLORS ---
+    const getThemeColors = () => {
+        const isNight = body.classList.contains('night-theme');
+        return {
+            textColor: isNight ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
+            gridColor: isNight ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+        };
+    };
+
+    // --- CHART GENERATION LOGIC ---
+    const generateGraph = () => {
+        const selectedGraph = graphSelect.value;
+        const colors = getThemeColors();
+        let config;
+
+        // Destroy the previous chart instance if it exists
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        switch (selectedGraph) {
+            case 'tempProfile':
+                config = {
+                    type: 'line',
+                    data: {
+                        labels: mockData.tempProfile.labels,
+                        datasets: [{
+                            label: 'Temperature (°C)',
+                            data: mockData.tempProfile.data,
+                            borderColor: '#3498db',
+                            backgroundColor: 'rgba(52, 152, 219, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { title: { display: true, text: 'Typical Ocean Temperature Profile', color: colors.textColor, font: { size: 16 } } },
+                        scales: {
+                            y: { title: { display: true, text: 'Temperature (°C)', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } },
+                            x: { title: { display: true, text: 'Depth (m)', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } }
+                        }
+                    }
+                };
+                break;
+
+            case 'salinityProfile':
+                config = {
+                    type: 'line',
+                    data: {
+                        labels: mockData.salinityProfile.labels,
+                        datasets: [{
+                            label: 'Salinity (PSU)',
+                            data: mockData.salinityProfile.data,
+                            borderColor: '#e74c3c',
+                            backgroundColor: 'rgba(231, 76, 60, 0.2)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { title: { display: true, text: 'Typical Ocean Salinity Profile', color: colors.textColor, font: { size: 16 } } },
+                        scales: {
+                            y: { title: { display: true, text: 'Salinity (PSU)', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } },
+                            x: { title: { display: true, text: 'Depth (m)', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } }
+                        }
+                    }
+                };
+                break;
+                
+            case 'nutrientDistribution':
+                config = {
+                    type: 'bar',
+                    data: {
+                        labels: mockData.nutrientDistribution.labels,
+                        datasets: [
+                            {
+                                label: 'Nitrate (µmol/kg)',
+                                data: mockData.nutrientDistribution.nitrate,
+                                backgroundColor: 'rgba(46, 204, 113, 0.7)',
+                            },
+                            {
+                                label: 'Phosphate (µmol/kg)',
+                                data: mockData.nutrientDistribution.phosphate,
+                                backgroundColor: 'rgba(155, 89, 182, 0.7)',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { title: { display: true, text: 'Average Nutrient Concentration by Ocean Basin', color: colors.textColor, font: { size: 16 } } },
+                        scales: {
+                            y: { title: { display: true, text: 'Concentration (µmol/kg)', color: colors.textColor }, ticks: { color: colors.textColor }, grid: { color: colors.gridColor } },
+                            x: { ticks: { color: colors.textColor }, grid: { color: colors.gridColor } }
+                        }
+                    }
+                };
+                break;
+        }
+
+        // Create the new chart
+        myChart = new Chart(ctx, config);
+    };
+
+    // --- Event Listeners ---
+    generateBtn.addEventListener('click', generateGraph);
+    
+    themeToggle.addEventListener('click', () => {
+        const isNight = body.classList.toggle('night-theme');
+        localStorage.setItem('theme', isNight ? 'dark' : 'light');
+        // Re-generate the graph to apply new theme colors
+        if (myChart) {
+            generateGraph();
+        }
+    });
+
+    // --- Initial Setup ---
+    const setAutoNight = () => {
+        const hour = new Date().getHours();
+        if (localStorage.getItem('theme') === 'dark' || (hour < 6 || hour > 19)) {
+            body.classList.add('night-theme');
+        }
+    };
+    setAutoNight();
+    generateGraph(); // Generate the default graph on page load
+});
+</script>
+
+</body>
+</html>
